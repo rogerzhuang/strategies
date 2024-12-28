@@ -1,0 +1,10 @@
+flask
+yfinance
+pandas
+pandas_market_calendars
+py_vollib
+requests
+pytz
+apscheduler
+selenium
+beautifulsoup4

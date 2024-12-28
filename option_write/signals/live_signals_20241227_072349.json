@@ -1,0 +1,28 @@
+{
+  "options_trades": [
+    {
+      "action": "SELL",
+      "contract": "CVNA PUT",
+      "expiry": "2025-01-03",
+      "strike": 195.0,
+      "premium": 0.01333054171044552,
+      "iv": 0.932
+    },
+    {
+      "action": "SELL",
+      "contract": "SMCI PUT",
+      "expiry": "2025-01-03",
+      "strike": 29.5,
+      "premium": 0.00907477253068901,
+      "iv": 0.803
+    },
+    {
+      "action": "SELL",
+      "contract": "XPEV PUT",
+      "expiry": "2025-01-03",
+      "strike": 11.5,
+      "premium": 0.003954131924866908,
+      "iv": 0.605
+    }
+  ]
+}

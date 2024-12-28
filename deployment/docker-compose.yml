@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  pairs-trading:
+    image: rogerzhuang/pairs
+    container_name: pairs-trading
+    ports:
+      - "5002:5002"
+    volumes:
+      - pairs_signals:/app/dashboard/signals
+      - pairs_results:/app/dashboard/results
+    environment:
+      - PYTHONPATH=/app
+      - FLASK_APP=dashboard/app.py
+      - FLASK_ENV=production
+    restart: unless-stopped
+
+  option-write:
+    image: rogerzhuang/option_write
+    container_name: option-write
+    ports:
+      - "5001:5001"
+    volumes:
+      - option_signals:/app/signals
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DISPLAY=:99
+    restart: unless-stopped
+
+volumes:
+  pairs_signals:
+    name: pairs_signals
+  pairs_results:
+    name: pairs_results
+  option_signals:
+    name: option_signals

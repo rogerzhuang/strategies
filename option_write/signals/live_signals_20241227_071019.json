@@ -1,0 +1,28 @@
+{
+  "options_trades": [
+    {
+      "action": "SELL",
+      "contract": "CVNA PUT",
+      "expiry": "2025-01-03",
+      "strike": 195.0,
+      "premium": 0.011885803730611683,
+      "iv": 0.935
+    },
+    {
+      "action": "SELL",
+      "contract": "XPEV PUT",
+      "expiry": "2025-01-03",
+      "strike": 11.5,
+      "premium": 0.004758090815092409,
+      "iv": 0.625
+    },
+    {
+      "action": "SELL",
+      "contract": "MRNA PUT",
+      "expiry": "2025-01-03",
+      "strike": 36.0,
+      "premium": 0.002731561925741003,
+      "iv": 0.622
+    }
+  ]
+}

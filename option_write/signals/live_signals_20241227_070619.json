@@ -1,0 +1,28 @@
+{
+  "options_trades": [
+    {
+      "action": "SELL",
+      "contract": "SMCI PUT",
+      "expiry": "2025-01-03",
+      "strike": 29.0,
+      "premium": 0.007865515558364872,
+      "iv": 0.838
+    },
+    {
+      "action": "SELL",
+      "contract": "MRNA PUT",
+      "expiry": "2025-01-03",
+      "strike": 36.0,
+      "premium": 0.0031102265307600438,
+      "iv": 0.634
+    },
+    {
+      "action": "SELL",
+      "contract": "XPEV PUT",
+      "expiry": "2025-01-03",
+      "strike": 11.5,
+      "premium": 0.0047730796878111695,
+      "iv": 0.611
+    }
+  ]
+}

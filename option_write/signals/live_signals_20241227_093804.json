@@ -1,0 +1,44 @@
+{
+  "options_trades": [
+    {
+      "action": "SELL",
+      "contract": "CVNA PUT",
+      "expiry": "2025-01-03",
+      "strike": 195.0,
+      "premium": 0.01645581387198474,
+      "iv": 0.999
+    },
+    {
+      "action": "SELL",
+      "contract": "SMCI PUT",
+      "expiry": "2025-01-03",
+      "strike": 28.5,
+      "premium": 0.009457755564127533,
+      "iv": 0.869
+    },
+    {
+      "action": "SELL",
+      "contract": "MRNA PUT",
+      "expiry": "2025-01-03",
+      "strike": 36.0,
+      "premium": 0.004137931034482758,
+      "iv": 0.647
+    },
+    {
+      "action": "SELL",
+      "contract": "XPEV PUT",
+      "expiry": "2025-01-03",
+      "strike": 11.5,
+      "premium": 0.004327403604959104,
+      "iv": 0.645
+    },
+    {
+      "action": "SELL",
+      "contract": "VST PUT",
+      "expiry": "2025-01-03",
+      "strike": 123.0,
+      "premium": 0.0027243008836019835,
+      "iv": 0.624
+    }
+  ]
+}
