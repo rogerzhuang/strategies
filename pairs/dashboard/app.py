@@ -9,12 +9,29 @@ import pandas_market_calendars as mcal
 from apscheduler.schedulers.background import BackgroundScheduler
 import subprocess
 import pytz
+import threading
 
 # Add parent directory to path to import config
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import DEFAULT_PARAMS
 
 app = Flask(__name__)
+
+def run_startup_jobs():
+    """Run startup jobs in background thread"""
+    print("Running startup jobs in background...")
+    def run_jobs():
+        try:
+            print(f"Running main.py at {datetime.now(pytz.timezone('US/Eastern'))}")
+            subprocess.run(['python', '../main.py'])
+            print("main.py completed")
+        except Exception as e:
+            print(f"Error running main.py: {e}")
+
+    # Start jobs in a separate thread
+    job_thread = threading.Thread(target=run_jobs)
+    job_thread.daemon = True  # Thread will exit when main program exits
+    job_thread.start()
 
 def init_scheduler():
     """Initialize the APScheduler"""
@@ -34,8 +51,8 @@ def init_scheduler():
         print(f"Running live_signals.py at {datetime.now(et_tz)}")
         subprocess.run(['python', '../live_signals.py'])
 
-    # Run main.py immediately on startup
-    run_main()
+    # Run startup jobs in background
+    run_startup_jobs()
 
     # Schedule main.py to run at 4:15 PM ET on weekdays
     sched.add_job(
@@ -335,7 +352,7 @@ def index():
                          selected_date=available_dates[0] if available_dates else None,
                          total_capital=1000000)
 
-@app.route('/pairtrade/signals/<date>/<capital>')
+@app.route('/signals/<date>/<capital>')
 def get_pair_trade_signals(date, capital):
     """
     REST endpoint for pair trade signals

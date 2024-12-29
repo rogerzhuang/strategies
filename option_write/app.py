@@ -11,12 +11,31 @@ import pytz
 import marketcaps
 import weeklies
 import live_signals
+import threading
 
 app = Flask(__name__)
+
+def run_startup_jobs():
+    print("Running startup jobs in background...")
+    def run_jobs():
+        # Run marketcaps first
+        marketcaps.main()
+        print("Marketcaps job completed")
+        # Then run weeklies
+        weeklies.main()
+        print("Weeklies job completed")
+    
+    # Start jobs in a separate thread
+    job_thread = threading.Thread(target=run_jobs)
+    job_thread.daemon = True  # Thread will exit when main program exits
+    job_thread.start()
 
 def init_scheduler():
     # Check if we're in the reloader process
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        # Run startup jobs in background
+        run_startup_jobs()
+        
         scheduler = BackgroundScheduler(daemon=True)
         eastern = pytz.timezone('US/Eastern')
 
@@ -68,7 +87,7 @@ def init_scheduler():
         return scheduler
     return None
 
-@app.route('/optionwrite/signals/<int:strategy>/<date>/<int:capital>')
+@app.route('/signals/<int:strategy>/<date>/<int:capital>')
 def get_signals_with_allocation(strategy, date, capital):
     try:
         # Validate strategy

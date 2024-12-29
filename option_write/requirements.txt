@@ -1,5 +1,5 @@
 flask
-yfinance
+yfinance==0.2.51
 pandas
 pandas_market_calendars
 py_vollib

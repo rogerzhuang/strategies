@@ -169,3 +169,22 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraformrc
+terraform.rc
+.terraform.lock.hcl
+
+# Deployment & Infrastructure
+.ansible/
+*.retry
+.vagrant/
+.docker/
+docker-compose.override.yml
+.serverless/
+.env.local
+.env.*.local

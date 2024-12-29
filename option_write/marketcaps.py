@@ -163,10 +163,22 @@ def scrape_companies():
                     try:
                         rank = cells[1].text.strip()
                         name_div = cells[2].find('div', class_='name-div')
-                        name = name_div.find(
-                            'div', class_='company-name').text.strip()
-                        ticker = name_div.find(
-                            'div', class_='company-code').text.strip()
+                        name = name_div.find('div', class_='company-name').text.strip()
+                        ticker_div = name_div.find('div', class_='company-code')
+                        
+                        # Clean up ticker by removing rank span and extracting symbol
+                        if ticker_div:
+                            rank_span = ticker_div.find('span', class_='rank')
+                            if rank_span:
+                                rank_span.decompose()
+                            raw_ticker = ticker_div.text.strip()
+                        else:
+                            raw_ticker = ''
+                            
+                        # Clean up ticker
+                        ticker = ''.join(c for c in raw_ticker 
+                                       if c.isalnum() or c in '.-').upper()
+                        
                         market_cap = cells[3].text.strip()
                         price = cells[4].text.strip()
                         change = cells[5].text.strip()

@@ -1,11 +1,21 @@
-version: "3.8"
-
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - pairs-trading
+      - option-write
+    restart: unless-stopped
+
   pairs-trading:
     image: rogerzhuang/pairs
     container_name: pairs-trading
-    ports:
-      - "5002:5002"
+    expose:
+      - "5002"
     volumes:
       - pairs_signals:/app/dashboard/signals
       - pairs_results:/app/dashboard/results
@@ -18,8 +28,8 @@ services:
   option-write:
     image: rogerzhuang/option_write
     container_name: option-write
-    ports:
-      - "5001:5001"
+    expose:
+      - "5001"
     volumes:
       - option_signals:/app/signals
     environment:
