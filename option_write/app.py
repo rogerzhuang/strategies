@@ -4,7 +4,7 @@ import yfinance as yf
 import json
 import os
 import glob
-from live_signals import get_next_weekly_expiry, find_closest_strike
+from live_signals import get_next_weekly_expiry, find_closest_strike_simple
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import pytz
@@ -140,7 +140,7 @@ def get_signals_with_allocation(strategy, date, capital):
                     f"Could not get real-time price for {ticker}, error: {e}, skipping strike update")
                 continue
 
-            new_strike, expiry, put_data = find_closest_strike(
+            new_strike, expiry, put_data = find_closest_strike_simple(
                 stock, current_price)
             if new_strike is not None and new_strike <= trade['strike']:
                 trade['strike'] = new_strike

@@ -75,6 +75,39 @@ def find_closest_strike(stock, current_price):
         print(f"Error finding closest strike: {str(e)}")
         return None, None, None
 
+def find_closest_strike_simple(stock, current_price):
+    """Find the closest valid put strike to 90% of current price, without bid/ask validation."""
+    expiry = get_next_weekly_expiry()
+    if not expiry:
+        return None, None, None
+
+    try:
+        options = stock.option_chain(expiry)
+        if options is None or not hasattr(options, 'puts') or options.puts.empty:
+            return None, None, None
+
+        # Find closest put strike within 88-92% range
+        lower_bound = current_price * 0.88
+        upper_bound = current_price * 0.92
+        target_strike = current_price * 0.9
+
+        valid_puts = options.puts[
+            (options.puts['strike'] >= lower_bound) &
+            (options.puts['strike'] <= upper_bound)
+        ]
+
+        if valid_puts.empty:
+            return None, None, None
+
+        # Find the closest strike to target_strike
+        valid_puts['distance'] = abs(valid_puts['strike'] - target_strike)
+        closest_put = valid_puts.loc[valid_puts['distance'].idxmin()]
+
+        return closest_put['strike'], expiry, closest_put
+
+    except Exception as e:
+        print(f"Error finding closest strike: {str(e)}")
+        return None, None, None
 
 def get_proxies():
     """Fetch proxies from webshare"""
