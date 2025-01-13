@@ -1,0 +1,8 @@
+flask
+requests
+yfinance
+pandas
+scipy
+pandas_market_calendars
+apscheduler
+pytz

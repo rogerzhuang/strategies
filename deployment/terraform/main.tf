@@ -15,6 +15,7 @@ module "vpc_instance" {
   instance_type = "t2.medium"  # Change based on your needs
   ami_id       = "ami-03f65b8614a860c29"  # Ubuntu AMI, change as needed
   key_name     = module.ssh_key.ssh_key_name
+  root_volume_size = 20  # Adjust this value as needed
 }
 
 module "ssh_key" {

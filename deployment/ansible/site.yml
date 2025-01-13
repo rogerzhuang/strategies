@@ -3,6 +3,20 @@
   hosts: strategies_instance
   become: yes
   tasks:
+    - name: Expand root partition
+      command: growpart /dev/xvda 1
+      register: growpart_result
+      failed_when: 
+        - growpart_result.rc != 0 
+        - "'NOCHANGE' not in growpart_result.stderr"
+        - "'cannot be grown' not in growpart_result.stdout"
+      changed_when: growpart_result.rc == 0
+
+    - name: Resize filesystem
+      command: resize2fs /dev/root
+      register: resize_result
+      changed_when: "'Nothing to do' not in resize_result.stdout"
+
     - name: Update apt cache
       apt:
         update_cache: yes
@@ -51,6 +65,12 @@
         src: ../docker-compose.yml
         dest: /opt/trading-strategies/docker-compose.yml
         mode: '0644'
+
+    - name: Copy environment file
+      copy:
+        src: ../.env
+        dest: /opt/trading-strategies/.env
+        mode: '0600'
 
     - name: Copy nginx configuration
       copy:

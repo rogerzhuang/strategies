@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 import pandas as pd
 from datetime import datetime, timedelta
 import glob
@@ -421,6 +421,68 @@ def get_pair_trade_signals(date, capital):
     except ValueError as e:
         return jsonify({'error': f'Invalid input format: {str(e)}'}), 400
     except Exception as e:
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@app.route('/backtest/performance')
+def backtest_performance():
+    """
+    REST endpoint to serve the backtest performance plot
+    Returns:
+        Portfolio performance plot image
+    """
+    try:
+        image_path = './results/portfolio_performance.png'
+        
+        if not os.path.exists(image_path):
+            return jsonify({'error': 'Portfolio performance image not found'}), 404
+            
+        return send_file(
+            image_path,
+            mimetype='image/png',
+            max_age=300
+        )
+        
+    except Exception as e:
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@app.route('/backtest/results')
+def show_results():
+    """
+    Endpoint to render the results dashboard
+    Returns:
+        Rendered results.html template
+    """
+    return render_template('results.html')
+
+@app.route('/backtest/data')
+def backtest_data():
+    """
+    REST endpoint to serve the backtest results in tabular format
+    Returns:
+        JSON formatted portfolio results data
+    """
+    try:
+        csv_path = './results/portfolio_results.csv'
+        
+        if not os.path.exists(csv_path):
+            return jsonify({'error': 'Portfolio results file not found'}), 404
+            
+        # Read CSV file and convert to simple list of dictionaries
+        df = pd.read_csv(csv_path)
+        
+        # Basic data cleaning - replace NaN with 0
+        df = df.fillna(0)
+        
+        # Convert to simple dictionary format
+        data = {
+            'columns': df.columns.tolist(),
+            'data': df.values.tolist()
+        }
+        
+        return jsonify(data)
+        
+    except Exception as e:
+        print(f"Error in backtest_data: {str(e)}")  # Log the actual error
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 if __name__ == '__main__':

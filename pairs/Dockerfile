@@ -25,7 +25,7 @@ COPY config.py data_utils.py main.py pairs_trader.py portfolio_utils.py live_sig
 
 # Copy dashboard files
 COPY dashboard/app.py dashboard/
-COPY dashboard/templates/index.html dashboard/templates/orders.html dashboard/templates/
+COPY dashboard/templates/* dashboard/templates/
 
 # Set environment variables
 ENV PYTHONPATH=/app

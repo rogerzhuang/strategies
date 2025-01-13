@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backtest Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-size: 14px;  /* Smaller base font size */
+        }
+        
+        .table-container {
+            max-height: 800px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        
+        .table {
+            margin-bottom: 0;
+            white-space: nowrap;
+            font-size: 0.85rem;  /* Even smaller font for table */
+        }
+        
+        th {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa !important;
+            border-bottom: 2px solid #dee2e6 !important;
+            font-weight: 600;
+            text-align: center;
+            padding: 10px !important;  /* Slightly reduced padding */
+            z-index: 1;  /* Ensure headers stay above content */
+        }
+        
+        td {
+            padding: 6px 10px !important;  /* Slightly reduced padding */
+            vertical-align: middle !important;
+            text-align: right;
+        }
+        
+        /* First column (dates) styling */
+        th:first-child, td:first-child {
+            position: sticky;
+            left: 0;
+            background: #f8f9fa;
+            border-right: 2px solid #dee2e6;
+            text-align: left;
+            z-index: 2;  /* Ensure date column stays above other content */
+        }
+        
+        /* Special z-index for top-left cell */
+        th:first-child {
+            z-index: 3;  /* Highest z-index to stay on top */
+        }
+        
+        /* Alternating row colors */
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        /* Hover effect */
+        tr:hover {
+            background-color: rgba(0,123,255,0.05) !important;
+        }
+
+        /* Positive/Negative values */
+        .positive {
+            color: #28a745;
+        }
+        .negative {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <h1 class="mb-4">Backtest Results</h1>
+        <div class="table-container">
+            <table class="table table-bordered">
+                <thead>
+                    <tr id="table-header">
+                        <!-- Headers will be populated here -->
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Data rows will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function formatNumber(value, columnName) {
+            if (typeof value !== 'number') return value;
+            
+            // Format all return values as percentages
+            if (columnName.includes('return')) {
+                return (value * 100).toFixed(2) + '%';
+            }
+            
+            // Format other numbers normally
+            return value.toFixed(2);
+        }
+
+        function populateTable(data) {
+            const header = document.getElementById('table-header');
+            const body = document.getElementById('table-body');
+            
+            // Clear existing content
+            header.innerHTML = '';
+            body.innerHTML = '';
+            
+            // Add headers, replacing "Unnamed: 0" with "Date"
+            data.columns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col === 'Unnamed: 0' ? 'DATE' : 
+                    col.replace(/_/g, ' ').toUpperCase();
+                header.appendChild(th);
+            });
+            
+            // Add data rows
+            data.data.forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach((cell, index) => {
+                    const td = document.createElement('td');
+                    
+                    if (typeof cell === 'number') {
+                        const formattedValue = formatNumber(cell, data.columns[index]);
+                        td.textContent = formattedValue;
+                        
+                        // Add color classes for return values
+                        if (data.columns[index].includes('return')) {
+                            td.classList.add(cell >= 0 ? 'positive' : 'negative');
+                        }
+                    } else {
+                        td.textContent = cell;
+                    }
+                    
+                    tr.appendChild(td);
+                });
+                body.appendChild(tr);
+            });
+        }
+
+        async function fetchResults() {
+            try {
+                const response = await fetch('/pairs/backtest/data');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                populateTable(data);
+            } catch (error) {
+                console.error('Error:', error);
+                document.querySelector('.table-container').innerHTML = 
+                    '<div class="alert alert-danger">Failed to load results. Please try refreshing the page.</div>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchResults);
+    </script>
+</body>
+</html>

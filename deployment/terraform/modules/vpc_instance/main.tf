@@ -102,6 +102,12 @@ resource "aws_instance" "main" {
 
   vpc_security_group_ids = [aws_security_group.main.id]
 
+  root_block_device {
+    volume_size = var.root_volume_size
+    volume_type = "gp3"
+    delete_on_termination = true
+  }
+
   tags = {
     Name = "${var.project_name}-instance"
   }

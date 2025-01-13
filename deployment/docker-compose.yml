@@ -9,6 +9,8 @@ services:
     depends_on:
       - pairs-trading
       - option-write
+      - universe
+      - zacks
     restart: unless-stopped
 
   pairs-trading:
@@ -37,6 +39,73 @@ services:
       - DISPLAY=:99
     restart: unless-stopped
 
+  universe:
+    image: rogerzhuang/universe
+    container_name: universe
+    expose:
+      - "5050"
+    volumes:
+      - universe_data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+    restart: unless-stopped
+
+  zacks_data:
+    image: rogerzhuang/zacks_data
+    container_name: zacks_data
+    expose:
+      - "5051"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      universe:
+        condition: service_started
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PGHOST=postgres
+      - PGUSER=${POSTGRES_USER}
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+      - PGPORT=${POSTGRES_PORT}
+      - PGDATABASE=${ZACKS_DB}
+    volumes:
+      - zacks_data:/app/data
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  zacks:
+    image: rogerzhuang/zacks
+    container_name: zacks
+    expose:
+      - "5003"
+    depends_on:
+      - zacks_data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+    volumes:
+      - zacks_signals:/app/signals
+    restart: unless-stopped
+
 volumes:
   pairs_signals:
     name: pairs_signals
@@ -44,3 +113,11 @@ volumes:
     name: pairs_results
   option_signals:
     name: option_signals
+  universe_data:
+    name: universe_data
+  postgres_data:
+    name: postgres_data
+  zacks_data:
+    name: zacks_data
+  zacks_signals:
+    name: zacks_signals

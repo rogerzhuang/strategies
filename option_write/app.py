@@ -8,19 +8,45 @@ from live_signals import get_next_weekly_expiry, find_closest_strike_simple
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import pytz
-import marketcaps
 import weeklies
 import live_signals
 import threading
+import requests
+import pandas as pd
+import config
 
 app = Flask(__name__)
+
+def get_universe_stocks():
+    """Fetch stocks from universe service"""
+    try:
+        response = requests.get(f'http://universe:5050/stock?min_cap={config.MIN_MARKET_CAP_BILLIONS}')
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Fetched {data['count']} stocks from universe service")
+            # Save to CSV in the same format expected by the rest of the application
+            df = pd.DataFrame([{
+                'Rank': idx + 1,
+                'Name': stock['name'],
+                'Ticker': stock['symbol'],
+                'Market Cap': f"${stock['market_cap']/1e9:.2f}B",
+                'Price': f"${stock['price']:.2f}",
+                'Country': stock['country']
+            } for idx, stock in enumerate(data['stocks'])])
+            df.to_csv('marketcaps.csv', index=False, quoting=1)
+            print("Saved universe data to marketcaps.csv")
+        else:
+            raise Exception(f"Failed to fetch stocks: {response.status_code}")
+    except Exception as e:
+        print(f"Error fetching universe stocks: {e}")
+        raise
 
 def run_startup_jobs():
     print("Running startup jobs in background...")
     def run_jobs():
-        # Run marketcaps first
-        marketcaps.main()
-        print("Marketcaps job completed")
+        # Replace marketcaps.main() with get_universe_stocks()
+        get_universe_stocks()
+        print("Universe stocks fetched")
         # Then run weeklies
         weeklies.main()
         print("Weeklies job completed")
@@ -40,14 +66,14 @@ def init_scheduler():
         eastern = pytz.timezone('US/Eastern')
 
         scheduler.add_job(
-            marketcaps.main,
+            get_universe_stocks,
             trigger=CronTrigger(
                 day_of_week='fri',
                 hour=16,
-                minute=15,
+                minute=45,
                 timezone=eastern
             ),
-            name='marketcaps_job'
+            name='universe_stocks_job'
         )
 
         scheduler.add_job(
@@ -87,7 +113,7 @@ def init_scheduler():
         return scheduler
     return None
 
-@app.route('/signals/<int:strategy>/<date>/<int:capital>')
+@app.route('/<int:strategy>/signals/<date>/<int:capital>')
 def get_signals_with_allocation(strategy, date, capital):
     try:
         # Validate strategy

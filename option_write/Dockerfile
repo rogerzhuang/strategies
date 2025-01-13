@@ -1,12 +1,4 @@
-FROM selenium/standalone-chrome:latest
-
-# Install Python and pip
-USER root
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    && rm -rf /var/lib/apt/lists/*
+FROM python:3.9-slim
 
 WORKDIR /app
 
@@ -20,7 +12,6 @@ RUN python3 -m venv /opt/venv && \
 # Copy application files
 COPY app.py .
 COPY config.py .
-COPY marketcaps.py .
 COPY weeklies.py .
 COPY live_signals.py .
 
@@ -29,7 +20,6 @@ RUN mkdir -p /app/signals
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV DISPLAY=:99
 
 # Expose port
 EXPOSE 5001
