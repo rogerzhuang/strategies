@@ -312,29 +312,82 @@ def get_signals_with_allocation(date, capital):
                 for ticker in short_stocks:
                     position_weights[ticker] = position_weights.get(ticker, 0) - stock_weight
         
-        # Calculate shares for each position
+        # Set up proxy pool
+        try:
+            logger.info("Fetching proxies for price data...")
+            proxies = get_proxies()
+            if not proxies:
+                raise ValueError("No proxies fetched")
+            logger.info(f"Successfully fetched {len(proxies)} proxies")
+        except Exception as e:
+            logger.error(f"Error setting up proxies: {e}")
+            logger.info("Falling back to no proxy")
+            proxies = [None]
+
+        def fetch_price_data(args):
+            ticker, weight, proxy_pool = args
+            for attempt in range(config.MAX_RETRIES):
+                try:
+                    proxy = next(proxy_pool)
+                    session = requests.Session()
+                    if proxy:
+                        session.proxies = {'http': proxy, 'https': proxy}
+                        logger.info(f"Using proxy: {proxy} for {ticker}")
+
+                    stock = yf.Ticker(ticker, session=session)
+                    current_price = stock.fast_info['lastPrice']
+                    
+                    dollar_allocation = capital * weight
+                    shares = int(dollar_allocation / current_price)
+                    
+                    if shares != 0:
+                        return {
+                            "ticker": ticker,
+                            "shares": shares,
+                            "price": current_price,
+                            "weight": weight,
+                            "allocation": shares * current_price
+                        }
+                    return None
+
+                except Exception as e:
+                    if attempt < config.MAX_RETRIES - 1:
+                        logger.error(f"{ticker} - Error on attempt {attempt + 1}: {str(e)}, retrying...")
+                        time.sleep(random.uniform(1, 3))
+                        continue
+                    logger.error(f"Failed to process {ticker} after {config.MAX_RETRIES} attempts: {str(e)}")
+                    return None
+            return None
+
+        # Create tasks list with tickers and proxy pools
+        tasks = []
+        for i, (ticker, weight) in enumerate(position_weights.items()):
+            # Create a new cycle starting from a different position for each ticker
+            shifted_proxies = proxies[i % len(proxies):] + proxies[:i % len(proxies)]
+            tasks.append((ticker, weight, cycle(shifted_proxies)))
+
+        # Process tickers concurrently
         positions = []
-        session = requests.Session()
-        for ticker, weight in position_weights.items():
-            try:
-                stock = yf.Ticker(ticker, session=session)
-                current_price = stock.fast_info['lastPrice']
-                
-                dollar_allocation = capital * weight
-                shares = int(dollar_allocation / current_price)
-                
-                if shares != 0:  # Only include non-zero positions
-                    positions.append({
-                        "ticker": ticker,
-                        "shares": shares,
-                        "price": current_price,
-                        "weight": weight,
-                        "allocation": shares * current_price
-                    })
-            except Exception as e:
-                logger.error(f"Error processing {ticker}: {str(e)}")
-                continue
+        successful_fetches = 0
+        failed_fetches = 0
         
+        logger.info(f"Processing {len(tasks)} tickers with {config.MAX_WORKERS} workers...")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=config.MAX_WORKERS) as executor:
+            futures = [executor.submit(fetch_price_data, task) for task in tasks]
+            completed = 0
+            for future in concurrent.futures.as_completed(futures):
+                completed += 1
+                if completed % 10 == 0:
+                    logger.info(f"Progress: {completed}/{len(tasks)} tickers processed")
+                result = future.result()
+                if result:
+                    successful_fetches += 1
+                    positions.append(result)
+                else:
+                    failed_fetches += 1
+
+        logger.info(f"Price fetch summary: {successful_fetches} successful, {failed_fetches} failed")
+
         return jsonify({
             "trading_days": trading_days,
             "positions": positions,

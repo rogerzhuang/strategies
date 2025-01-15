@@ -1,6 +1,7 @@
 services:
   nginx:
     image: nginx:alpine
+    pull_policy: always
     container_name: nginx-proxy
     ports:
       - "80:80"
@@ -15,6 +16,7 @@ services:
 
   pairs-trading:
     image: rogerzhuang/pairs
+    pull_policy: always
     container_name: pairs-trading
     expose:
       - "5002"
@@ -29,6 +31,7 @@ services:
 
   option-write:
     image: rogerzhuang/option_write
+    pull_policy: always
     container_name: option-write
     expose:
       - "5001"
@@ -41,6 +44,7 @@ services:
 
   universe:
     image: rogerzhuang/universe
+    pull_policy: always
     container_name: universe
     expose:
       - "5050"
@@ -54,6 +58,7 @@ services:
 
   zacks_data:
     image: rogerzhuang/zacks_data
+    pull_policy: always
     container_name: zacks_data
     expose:
       - "5051"
@@ -72,6 +77,7 @@ services:
 
   zacks:
     image: rogerzhuang/zacks
+    pull_policy: always
     container_name: zacks
     expose:
       - "5003"
