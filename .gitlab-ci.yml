@@ -1,0 +1,75 @@
+variables:
+  DEPLOYMENT_SERVER: 172.16.1.11
+  DEPLOYMENT_USER: strategy
+  DEPLOYMENT_PATH: /opt/strategies
+  DOCKER_REGISTRY: rogerzhuang
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: docker:latest
+  before_script:
+    - echo "$DOCKER_ACCESS_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  script:
+    # Build and push pairs-trading image
+    - docker build -t $DOCKER_REGISTRY/pairs:$CI_COMMIT_SHA -t $DOCKER_REGISTRY/pairs:latest ./pairs
+    - docker push $DOCKER_REGISTRY/pairs:$CI_COMMIT_SHA
+    - docker push $DOCKER_REGISTRY/pairs:latest
+    
+    # Build and push option-write image
+    - docker build -t $DOCKER_REGISTRY/option_write:$CI_COMMIT_SHA -t $DOCKER_REGISTRY/option_write:latest ./option_write
+    - docker push $DOCKER_REGISTRY/option_write:$CI_COMMIT_SHA
+    - docker push $DOCKER_REGISTRY/option_write:latest
+    
+    # Build and push universe image
+    - docker build -t $DOCKER_REGISTRY/universe:$CI_COMMIT_SHA -t $DOCKER_REGISTRY/universe:latest ./universe
+    - docker push $DOCKER_REGISTRY/universe:$CI_COMMIT_SHA
+    - docker push $DOCKER_REGISTRY/universe:latest
+    
+    # Build and push zacks_data image
+    - docker build -t $DOCKER_REGISTRY/zacks_data:$CI_COMMIT_SHA -t $DOCKER_REGISTRY/zacks_data:latest ./zacks_data
+    - docker push $DOCKER_REGISTRY/zacks_data:$CI_COMMIT_SHA
+    - docker push $DOCKER_REGISTRY/zacks_data:latest
+    
+    # Build and push zacks image
+    - docker build -t $DOCKER_REGISTRY/zacks:$CI_COMMIT_SHA -t $DOCKER_REGISTRY/zacks:latest ./zacks
+    - docker push $DOCKER_REGISTRY/zacks:$CI_COMMIT_SHA
+    - docker push $DOCKER_REGISTRY/zacks:latest
+
+deploy:
+  stage: deploy
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update -y
+    - apt-get install -y openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$DEPLOY_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" > ~/.ssh/config
+    - chmod 600 ~/.ssh/config
+  script:
+    # Create necessary directories on remote server
+    - |
+      ssh $DEPLOYMENT_USER@$DEPLOYMENT_SERVER "sudo mkdir -p $DEPLOYMENT_PATH/volumes/{pairs_signals,pairs_results,option_signals,universe_data,zacks_data,zacks_signals} && \
+      sudo chown -R $DEPLOYMENT_USER:$DEPLOYMENT_USER $DEPLOYMENT_PATH"
+
+    # Copy deployment files
+    - scp deployment/docker-compose.yml $DEPLOYMENT_USER@$DEPLOYMENT_SERVER:$DEPLOYMENT_PATH/
+    - scp deployment/.env $DEPLOYMENT_USER@$DEPLOYMENT_SERVER:$DEPLOYMENT_PATH/
+    - scp deployment/nginx.conf $DEPLOYMENT_USER@$DEPLOYMENT_SERVER:$DEPLOYMENT_PATH/
+
+    # Set proper permissions for volumes
+    - |
+      ssh $DEPLOYMENT_USER@$DEPLOYMENT_SERVER "cd $DEPLOYMENT_PATH && \
+      sudo chmod -R 755 volumes"
+
+    # Deploy using docker compose
+    # - |
+    #   ssh $DEPLOYMENT_USER@$DEPLOYMENT_SERVER "cd $DEPLOYMENT_PATH && \
+    #   docker compose pull && \
+    #   docker compose up -d && \
+    #   docker system prune -f"

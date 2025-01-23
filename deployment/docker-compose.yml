@@ -21,8 +21,8 @@ services:
     expose:
       - "5002"
     volumes:
-      - pairs_signals:/app/dashboard/signals
-      - pairs_results:/app/dashboard/results
+      - ./volumes/pairs_signals:/app/dashboard/signals
+      - ./volumes/pairs_results:/app/dashboard/results
     environment:
       - PYTHONPATH=/app
       - FLASK_APP=dashboard/app.py
@@ -36,7 +36,7 @@ services:
     expose:
       - "5001"
     volumes:
-      - option_signals:/app/signals
+      - ./volumes/option_signals:/app/signals
     environment:
       - PYTHONUNBUFFERED=1
       - DISPLAY=:99
@@ -49,7 +49,7 @@ services:
     expose:
       - "5050"
     volumes:
-      - universe_data:/app/data
+      - ./volumes/universe_data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
       - FLASK_APP=app.py
@@ -72,7 +72,7 @@ services:
       - PGPORT=${POSTGRES_PORT}
       - PGDATABASE=${ZACKS_DB}
     volumes:
-      - zacks_data:/app/data
+      - ./volumes/zacks_data:/app/data
     restart: unless-stopped
 
   zacks:
@@ -88,19 +88,5 @@ services:
       - FLASK_APP=app.py
       - FLASK_ENV=production
     volumes:
-      - zacks_signals:/app/signals
+      - ./volumes/zacks_signals:/app/signals
     restart: unless-stopped
-
-volumes:
-  pairs_signals:
-    name: pairs_signals
-  pairs_results:
-    name: pairs_results
-  option_signals:
-    name: option_signals
-  universe_data:
-    name: universe_data
-  zacks_data:
-    name: zacks_data
-  zacks_signals:
-    name: zacks_signals

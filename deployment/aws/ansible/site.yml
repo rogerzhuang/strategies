@@ -62,19 +62,19 @@
 
     - name: Copy docker-compose file
       copy:
-        src: ../docker-compose.yml
+        src: ../../docker-compose.yml
         dest: /opt/trading-strategies/docker-compose.yml
         mode: '0644'
 
     - name: Copy environment file
       copy:
-        src: ../.env
+        src: ../../.env
         dest: /opt/trading-strategies/.env
         mode: '0600'
 
     - name: Copy nginx configuration
       copy:
-        src: ../nginx.conf
+        src: ../../nginx.conf
         dest: /opt/trading-strategies/nginx.conf
         mode: '0644'
 
